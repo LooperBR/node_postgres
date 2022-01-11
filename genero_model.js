@@ -1,34 +1,16 @@
 const Joi = require('joi')
 const conexao = require('./conexao')
 
-function validateLivro(livro) {
+function validateGenero(genero) {
     return new Promise(async(resolve,reject)=>{
-        const query = {
-            text: 'SELECT DISTINCT id_genero FROM genero ORDER BY id_genero'
-        }
-        try{
-            const retorno = await conexao(query)
-            // console.log(JSON.stringify(res.rows))
-            // return resolve(JSON.stringify(res.rows))
-            const generos = []
-            console.log(retorno.rows)
-            retorno.rows.forEach(element => {
-                generos.push(element.id_genero)
-            });
 
-            const schema = Joi.object({
+        const schema = Joi.object({
 
-                nome: Joi.string().required(),
+            genero: Joi.string().required(),
 
-                id_genero: Joi.number().valid(...generos).required()
+        });
 
-            });
-
-            return resolve(schema.validate(livro))
-        }catch(e){
-            console.log(e);
-            return reject(Error(e))
-        }
+        return resolve(schema.validate(genero))
     })
     
 }
@@ -36,7 +18,7 @@ function validateLivro(livro) {
 var selectAll = ()=>{
     return new Promise(async(resolve,reject)=>{
         const query = {
-            text: 'SELECT * FROM livro'
+            text: 'SELECT * FROM genero'
         }
         try{
             const retorno = await conexao(query)
@@ -55,7 +37,7 @@ var selectAll = ()=>{
 var select = (id) => {
     return new Promise(async(resolve, reject) => {
         const query = {
-            text : 'SELECT * FROM livro WHERE id_livro = $1',
+            text : 'SELECT * FROM genero WHERE id_genero = $1',
             values :[id]
         }
         try{
@@ -68,10 +50,10 @@ var select = (id) => {
     })
 }
 
-var insert = (livro) => {
+var insert = (genero) => {
     return new Promise(async (resolve, reject) => {
         try {
-            const validate = await validateLivro(livro)
+            const validate = await validateGenero(genero)
         
             if (validate.error) {
                 console.log(validate)
@@ -83,16 +65,16 @@ var insert = (livro) => {
             var values = []
             var i = 1
 
-            for (var key in livro) {
-                if (livro.hasOwnProperty(key)) {
+            for (var key in genero) {
+                if (genero.hasOwnProperty(key)) {
                     text.push(key)
                     text2.push('$' + i)
-                    values.push(livro[key])
+                    values.push(genero[key])
                     i++
                 }
             }
             const query = {
-                text: 'INSERT INTO livro(' + text.join() + ') VALUES (' + text2.join() + ') RETURNING *',
+                text: 'INSERT INTO genero(' + text.join() + ') VALUES (' + text2.join() + ') RETURNING *',
                 values: values
             }
 
@@ -100,7 +82,8 @@ var insert = (livro) => {
             console.log(JSON.stringify(retorno.rows))
             return resolve(JSON.stringify(retorno.rows))
             
-        }catch(e){
+        }
+        catch(e){
             return reject(e)
         }
 
@@ -108,10 +91,10 @@ var insert = (livro) => {
     })
 }
 
-var update = (id,livro) => {
+var update = (id, genero) => {
     return new Promise( async (resolve, reject) => {
         try {
-            const validate = await validateLivro(livro)
+            const validate = await validateGenero(genero)
         
             if (validate.error) {
                 console.log(validate)
@@ -120,7 +103,7 @@ var update = (id,livro) => {
 
 
             const query2 = {
-                text: 'SELECT * FROM livro WHERE id_livro = $1',
+                text: 'SELECT * FROM genero WHERE id_genero = $1',
                 values: [id]
             }
 
@@ -133,10 +116,10 @@ var update = (id,livro) => {
             var values = []
             var i = 1
 
-            for (var key in livro) {
-                if (livro.hasOwnProperty(key)) {
+            for (var key in genero) {
+                if (genero.hasOwnProperty(key)) {
                     text.push(key + '= $' + i)
-                    values.push(livro[key])
+                    values.push(genero[key])
                     i++
                 }
             }
@@ -144,7 +127,7 @@ var update = (id,livro) => {
             values.push(id)
 
             const query = {
-                text: 'UPDATE LIVRO SET ' + text.join() + ' WHERE ID_LIVRO = $' + i + ' RETURNING *',
+                text: 'UPDATE genero SET ' + text.join() + ' WHERE ID_genero = $' + i + ' RETURNING *',
                 values: values
             }
 
@@ -152,7 +135,8 @@ var update = (id,livro) => {
             console.log(JSON.stringify(retorno.rows))
             return resolve(JSON.stringify(retorno.rows))
             
-        }catch(err){
+        }
+        catch(err){
             return reject(err)
         }
 
@@ -161,11 +145,11 @@ var update = (id,livro) => {
     })
 }
 
-var deleteLivro = (id) => {
+var deleteGenero = (id) => {
     return new Promise(async(resolve, reject) => {
 
         const query2 = {
-            text: 'SELECT * FROM livro WHERE id_livro = $1',
+            text: 'SELECT * FROM genero WHERE id_genero = $1',
             values: [id]
         }
         try{
@@ -175,8 +159,19 @@ var deleteLivro = (id) => {
                 return reject("id não encontrado")
             }
 
+            const query3 = {
+                text: 'SELECT * FROM livro WHERE id_genero = $1',
+                values: [id]
+            }
+
+            const retorno3 = await conexao(query3)
+            if (retorno3.rows.length > 0) {
+                console.log("livro atrelados");
+                return reject("existem livros com esse genero - não foi deletado")
+            }
+
             const query = {
-                text: 'DELETE FROM LIVRO WHERE id_livro = $1 RETURNING *',
+                text: 'DELETE FROM genero WHERE id_genero = $1 RETURNING *',
                 values: [id]
             }
 
@@ -192,11 +187,41 @@ var deleteLivro = (id) => {
     })
 }
 
+var deleteAllGenero = (id) => {
+    return new Promise(async (resolve, reject) => {
 
-//UPDATE LIVRO SET NOME = 'TESTEUPDATE' WHERE ID_LIVRO = 6 RETURNING *
+        const query2 = {
+            text: 'SELECT * FROM genero WHERE id_genero = $1',
+            values: [id]
+        }
+        try {
+            const retorno2 = await conexao(query2)
+            if (retorno2.rows.length <= 0) {
+                console.log("nao achou");
+                return reject("genero não encontrado")
+            }
+
+
+            const query = {
+                text: 'DELETE FROM genero WHERE id_genero = $1 RETURNING *',
+                values: [id]
+            }
+
+            const retorno = await conexao(query)
+            console.log(JSON.stringify(retorno.rows))
+            return resolve(JSON.stringify(retorno.rows))
+        }
+        catch (e) {
+            console.log(e);
+            return reject(Error(e))
+        }
+
+    })
+}
 
 module.exports.selectAll = selectAll;
 module.exports.select = select;
 module.exports.insert = insert;
 module.exports.update = update;
-module.exports.deleteLivro = deleteLivro;
+module.exports.deleteGenero = deleteGenero;
+module.exports.deleteAllGenero = deleteAllGenero;

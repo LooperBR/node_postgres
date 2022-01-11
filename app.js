@@ -1,15 +1,16 @@
-const express = require('express');
-const livro_model = require('./livro_model')
+import express, { json } from 'express';
+import { selectAll, select, insert, update, deleteLivro } from './livro_model';
+import { selectAll as _selectAll, select as _select, insert as _insert, update as _update, deleteGenero } from './genero_model';
 
 const app = express();
 
-app.use(express.json());
+app.use(json());
 
 // Livros
 
 app.get('/livros',(req,res)=>{
 
-    livro_model.selectAll()
+    selectAll()
     .then(
         (ret)=>{
             console.log(ret)
@@ -25,7 +26,7 @@ app.get('/livros',(req,res)=>{
 
 app.get('/livros/:id', (req, res) => {
 
-    livro_model.select(req.params.id)
+    select(req.params.id)
         .then(
             (ret) => {
                 console.log(ret)
@@ -40,7 +41,7 @@ app.get('/livros/:id', (req, res) => {
 })
 
 app.post('/livros',(req,res)=>{
-    livro_model.insert(req.body)
+    insert(req.body)
     .then(
         (ret)=>{
             console.log(ret)
@@ -55,7 +56,7 @@ app.post('/livros',(req,res)=>{
 })
 
 app.put('/livros/:id', (req, res) => {
-    livro_model.update(req.params.id,req.body)
+    update(req.params.id,req.body)
         .then(
             (ret) => {
                 console.log(ret)
@@ -70,7 +71,84 @@ app.put('/livros/:id', (req, res) => {
 })
 
 app.delete('/livros/:id', (req, res) => {
-    livro_model.deleteLivro(req.params.id)
+    deleteLivro(req.params.id)
+        .then(
+            (ret) => {
+                console.log(ret)
+                res.send(ret);
+            },
+            (err) => {
+                console.log('err');
+                console.log(err);
+                res.status(400).send(err);
+            }
+        )
+})
+
+app.get('/generos', (req, res) => {
+
+    _selectAll()
+        .then(
+            (ret) => {
+                console.log(ret)
+                res.send(ret);
+            },
+            (err) => {
+                console.log(err);
+                res.status(404).send('Falha interna');
+            }
+        )
+
+})
+
+app.get('/generos/:id', (req, res) => {
+
+    _select(req.params.id)
+        .then(
+            (ret) => {
+                console.log(ret)
+                res.send(ret);
+            },
+            (err) => {
+                console.log(err);
+                res.status(404).send('Falha interna');
+            }
+        )
+
+})
+
+app.post('/generos', (req, res) => {
+    _insert(req.body)
+        .then(
+            (ret) => {
+                console.log(ret)
+                res.send(ret);
+            },
+            (err) => {
+                console.log('err');
+                console.log(err);
+                res.status(400).send(err);
+            }
+        )
+})
+
+app.put('/generos/:id', (req, res) => {
+    _update(req.params.id, req.body)
+        .then(
+            (ret) => {
+                console.log(ret)
+                res.send(ret);
+            },
+            (err) => {
+                console.log('err');
+                console.log(err);
+                res.status(400).send(err);
+            }
+        )
+})
+
+app.delete('/generos/:id', (req, res) => {
+    deleteGenero(req.params.id)
         .then(
             (ret) => {
                 console.log(ret)
